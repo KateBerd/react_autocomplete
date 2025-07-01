@@ -23,6 +23,7 @@ export const App: React.FC = () => {
           setPerson(null);
         } else {
           setIsError(false);
+          setPerson(foundPerson);
         }
       }, 300),
     [],
@@ -58,7 +59,6 @@ export const App: React.FC = () => {
               value={query}
               onChange={handleNameChange}
               onFocus={() => setIsOpen(true)}
-              onBlur={() => setTimeout(() => setIsOpen(false), 200)}
             />
           </div>
 
