@@ -11,10 +11,10 @@ export const App: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isError, setIsError] = useState(false);
 
-  const deboucedSearch = useMemo(
+  const debouncedSearch = useMemo(
     () =>
       debounce((value: string) => {
-        const foundPerson = [...peopleFromServer].find(human =>
+        const foundPerson = peopleFromServer.find(human =>
           human.name.toLowerCase().includes(value.toLowerCase()),
         );
 
@@ -23,7 +23,6 @@ export const App: React.FC = () => {
           setPerson(null);
         } else {
           setIsError(false);
-          setPerson(foundPerson);
         }
       }, 300),
     [],
@@ -33,8 +32,17 @@ export const App: React.FC = () => {
     const value = event.target.value;
 
     setQuery(value);
-    deboucedSearch(value);
+    setIsOpen(true);
+    debouncedSearch(value);
   };
+
+  const matchingPeople = peopleFromServer.filter(human =>
+    human.name.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  const shouldShowDropdown = isOpen && matchingPeople.length > 0;
+  const shouldShowError =
+    isOpen && matchingPeople.length === 0 && query.trim().length > 0;
 
   return (
     <div className="container">
@@ -47,7 +55,7 @@ export const App: React.FC = () => {
 
         <div
           className={classNames('dropdown', {
-            'is-active': isOpen,
+            'is-active': shouldShowDropdown,
           })}
         >
           <div className="dropdown-trigger">
@@ -59,16 +67,18 @@ export const App: React.FC = () => {
               value={query}
               onChange={handleNameChange}
               onFocus={() => setIsOpen(true)}
+              onBlur={() => setTimeout(() => setIsOpen(false), 200)} // чтобы успел сработать onClick по пункту
             />
           </div>
 
-          <div className="dropdown-menu" role="menu" data-cy="suggestions-list">
-            <div className="dropdown-content">
-              {peopleFromServer
-                .filter(human =>
-                  human.name.toLowerCase().includes(query.toLowerCase()),
-                )
-                .map(human => (
+          {shouldShowDropdown && (
+            <div
+              className="dropdown-menu"
+              role="menu"
+              data-cy="suggestions-list"
+            >
+              <div className="dropdown-content">
+                {matchingPeople.map(human => (
                   <div
                     className="dropdown-item"
                     data-cy="suggestion-item"
@@ -83,11 +93,12 @@ export const App: React.FC = () => {
                     <p className="has-text-link">{human.name}</p>
                   </div>
                 ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
-        {isError && (
+        {shouldShowError && (
           <div
             className="
             notification
@@ -95,7 +106,7 @@ export const App: React.FC = () => {
             is-light
             mt-3
             is-align-self-flex-start
-          "
+            "
             role="alert"
             data-cy="no-suggestions-message"
           >
